@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MMB-TIM — Manajemen Mebel & Produksi</title>
+<style>
+:root{
+  --bg:#0b1220;--panel:#15203a;--panel2:#1e2b48;--line:#2b3b5e;
+  --text:#e8eefc;--muted:#90a0c0;--brand:#b45309;--brand2:#92400e;
+  --green:#22c55e;--amber:#f59e0b;--red:#ef4444;--purple:#a855f7;--teal:#14b8a6;--blue:#3b82f6;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh}
+.sidebar{width:236px;background:var(--panel);border-right:1px solid var(--line);padding:20px 14px;position:sticky;top:0;height:100vh;flex-shrink:0}
+.logo{font-size:17px;font-weight:800;padding:4px 10px 4px;display:flex;align-items:center;gap:9px;letter-spacing:.5px}
+.logo .dot{width:26px;height:26px;border-radius:7px;background:linear-gradient(135deg,#b45309,#f59e0b);display:flex;align-items:center;justify-content:center;font-size:13px}
+.logo small{display:block;font-size:10px;color:var(--muted);font-weight:500;letter-spacing:.3px}
+.nav{margin-top:18px}
+.nav button{width:100%;text-align:left;background:none;border:none;color:var(--muted);padding:11px 12px;border-radius:9px;font-size:14px;cursor:pointer;display:flex;align-items:center;gap:10px;margin-bottom:3px}
+.nav button:hover{background:var(--panel2);color:var(--text)}
+.nav button.active{background:var(--brand);color:#fff}
+.nav .ico{width:18px;text-align:center}
+.main{flex:1;padding:24px 30px;overflow-x:hidden}
+.head{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px}
+.head h1{font-size:21px}.head .sub{color:var(--muted);font-size:13px;margin-top:3px}
+.btn{background:var(--brand);color:#fff;border:none;padding:9px 15px;border-radius:9px;font-size:14px;cursor:pointer;font-weight:500}
+.btn:hover{background:var(--brand2)}.btn.ghost{background:var(--panel2);color:var(--text)}
+.btn.sm{padding:6px 10px;font-size:12px}.btn.danger{background:var(--red)}
+.grid{display:grid;gap:15px}.stats{grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:17px}
+.stat .label{color:var(--muted);font-size:13px}
+.stat .num{font-size:26px;font-weight:800;margin-top:6px}
+.stat .num small{font-size:13px;color:var(--muted);font-weight:400}
+.stat .ico2{float:right;width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px}
+.bar{height:9px;background:var(--panel2);border-radius:6px;overflow:hidden;margin-top:10px}
+.bar > span{display:block;height:100%;border-radius:6px;background:var(--brand);transition:width .4s}
+table{width:100%;border-collapse:collapse}
+th,td{text-align:left;padding:11px 9px;font-size:14px;border-bottom:1px solid var(--line)}
+th{color:var(--muted);font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:.05em}
+.avatar{width:32px;height:32px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0}
+.who{display:flex;align-items:center;gap:9px}
+.pill{display:inline-block;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:500}
+.pill.green{background:rgba(34,197,94,.16);color:#4ade80}.pill.amber{background:rgba(245,158,11,.16);color:#fbbf24}
+.pill.red{background:rgba(239,68,68,.16);color:#f87171}.pill.blue{background:rgba(59,130,246,.16);color:#60a5fa}
+.pill.purple{background:rgba(168,85,247,.16);color:#c084fc}.pill.gray{background:var(--panel2);color:var(--muted)}
+.pill.teal{background:rgba(20,184,166,.16);color:#2dd4bf}
+.kanban{display:grid;grid-template-columns:repeat(3,1fr);gap:15px;align-items:start}
+.col{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:13px;min-height:120px}
+.col h3{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:11px;display:flex;justify-content:space-between}
+.col h3 span{background:var(--panel2);border-radius:20px;padding:1px 8px;font-size:11px}
+.task{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:11px;margin-bottom:9px;cursor:grab}
+.task.drag{opacity:.4}.task .t{font-size:14px;font-weight:500;margin-bottom:8px}
+.task .meta{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--muted)}
+.col.over{outline:2px dashed var(--brand);outline-offset:-4px}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;padding:16px;z-index:50}
+.overlay.show{display:flex}
+.modal{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px;width:100%;max-width:460px;max-height:90vh;overflow:auto}
+.modal h2{font-size:18px;margin-bottom:16px}
+.field{margin-bottom:13px}.field label{display:block;font-size:13px;color:var(--muted);margin-bottom:5px}
+.field input,.field select,.field textarea{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:10px 11px;color:var(--text);font-size:14px;font-family:inherit}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.modal .actions{display:flex;gap:10px;justify-content:flex-end;margin-top:6px}
+.page{display:none}.page.show{display:block}
+.empty{color:var(--muted);text-align:center;padding:26px;font-size:14px}
+.row-actions{display:flex;gap:6px}.tag{font-size:11px;color:var(--muted)}
+.sectit{font-size:14px;font-weight:600;margin-bottom:13px}
+.toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+.toolbar select,.toolbar input{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:8px 10px;color:var(--text);font-size:13px}
+body.ro .head .btn,body.ro .row-actions,body.ro .task .meta .btn,body.ro #storageBox .btn[onclick*="import"]{display:none!important}
+body.ro .task{cursor:default}
+#nav button[data-page="keuangan"]{display:none!important}
+body.finview #nav button[data-page="keuangan"]{display:flex!important}
+#page-keuangan .head .btn,#page-keuangan .row-actions{display:none!important}
+body.finedit #page-keuangan .head .btn{display:inline-block!important}
+body.finedit #page-keuangan .row-actions{display:flex!important}
+#page-barang .head .btn,#page-barang .row-actions{display:none!important}
+body.finedit #page-barang .head .btn{display:inline-block!important}
+body.finedit #page-barang .row-actions{display:flex!important}
+@media(max-width:860px){
+  body{flex-direction:column}.sidebar{width:100%;height:auto;position:static}
+  .nav{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}.nav button{width:auto}
+  .kanban{grid-template-columns:1fr}.main{padding:16px}.two{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<aside class="sidebar">
+  <div class="logo"><span class="dot">M</span><div>MMB-TIM<small>Manajemen Mebel & Produksi</small></div></div>
+  <nav class="nav" id="nav">
+    <button data-page="dashboard" class="active"><span class="ico">▣</span> Dashboard</button>
+    <button data-page="karyawan"><span class="ico">◍</span> Karyawan</button>
+    <button data-page="pelanggan"><span class="ico">★</span> Pelanggan</button>
+    <button data-page="pesanan"><span class="ico">▤</span> Pesanan</button>
+    <button data-page="leads"><span class="ico">◔</span> Leads</button>
+    <button data-page="tasks"><span class="ico">☑</span> Tugas</button>
+    <button data-page="keuangan"><span class="ico">₿</span> Keuangan</button>
+    <button data-page="barang"><span class="ico">▦</span> Barang</button>
+  </nav>
+  <div id="storageBox" style="margin-top:18px;padding:11px;background:var(--panel2);border-radius:10px;font-size:12px">
+    <div id="userBox"></div>
+    <div style="color:var(--muted);margin-bottom:7px">💾 Penyimpanan Data</div>
+    <div id="storeStatus" class="pill gray" style="display:block;text-align:center;margin-bottom:9px;cursor:default">Lokal (browser)</div>
+    <button class="btn ghost sm" style="width:100%;margin-bottom:5px" onclick="exportData()">⬇ Export cadangan</button>
+    <button class="btn ghost sm" style="width:100%" onclick="document.getElementById('importFile').click()">⬆ Import cadangan</button>
+    <input type="file" id="importFile" accept="application/json" style="display:none" onchange="importData(event)">
+  </div>
+</aside>
+
+<main class="main">
+  <!-- DASHBOARD -->
+  <section class="page show" id="page-dashboard">
+    <div class="head"><div><h1>Dashboard</h1><div class="sub" id="todayStr"></div></div>
+      <input type="month" id="dashMonth" style="background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:8px;color:var(--text)"></div>
+    <div class="grid stats" id="statCards"></div>
+    <div class="card" style="margin-top:15px">
+      <div class="sectit">Progress Omset menuju Target Rp 500 jt/bulan — <span id="dashMonthLbl"></span></div>
+      <div id="teamOmset"></div>
+    </div>
+    <div class="grid" style="grid-template-columns:1fr 1fr;margin-top:15px;align-items:start">
+      <div class="card"><div class="sectit">Pesanan per Tahap Produksi</div><div id="stageBox"></div></div>
+      <div class="card"><div class="sectit">Funnel Leads (bulan ini)</div><div id="funnelBox"></div></div>
+    </div>
+  </section>
+
+  <!-- KARYAWAN -->
+  <section class="page" id="page-karyawan">
+    <div class="head"><div><h1>Karyawan</h1><div class="sub">Pimpinan, direktur, marketing, gambar, mandor, tukang, finishing, kenek, sopir</div></div>
+      <button class="btn" onclick="openKar()">+ Tambah Karyawan</button></div>
+    <div class="card"><table><thead><tr><th>Nama</th><th>Tipe</th><th>Peran/Jabatan</th><th>Kontak</th><th></th></tr></thead>
+      <tbody id="karRows"></tbody></table>
+      <div class="empty" id="karEmpty">Belum ada karyawan.</div></div>
+  </section>
+
+  <!-- PELANGGAN -->
+  <section class="page" id="page-pelanggan">
+    <div class="head"><div><h1>Pelanggan</h1><div class="sub">Pelanggan yang sudah pernah beli</div></div>
+      <button class="btn" onclick="openPel()">+ Tambah Pelanggan</button></div>
+    <div class="toolbar"><label class="tag">Cari:</label><input id="pelSearch" placeholder="nama / kontak" oninput="renderPel()"></div>
+    <div class="card"><table><thead><tr><th>Nama</th><th>Kontak</th><th>Alamat</th><th>Total Belanja</th><th>Catatan</th><th></th></tr></thead>
+      <tbody id="pelRows"></tbody></table>
+      <div class="empty" id="pelEmpty">Belum ada pelanggan.</div></div>
+  </section>
+
+  <!-- PESANAN -->
+  <section class="page" id="page-pesanan">
+    <div class="head"><div><h1>Pesanan (Sedang Dikerjakan)</h1><div class="sub">Owner, item, nilai, pembayaran, tahap produksi & PIC</div></div>
+      <button class="btn" onclick="openPes()">+ Tambah Pesanan</button></div>
+    <div class="toolbar">
+      <label class="tag">Tahap:</label><select id="pesStageF" onchange="renderPes()"><option value="">Semua</option><option>Survei</option><option>Desain</option><option>Produksi</option><option>Instalasi</option><option>Selesai</option></select>
+      <label class="tag">PIC:</label><select id="pesPicF" onchange="renderPes()"><option value="">Semua</option></select>
+    </div>
+    <div class="card"><table><thead><tr><th>Owner / Pemilik</th><th>Item</th><th>Nilai</th><th>Pembayaran</th><th>PIC</th><th>Tahap</th><th></th></tr></thead>
+      <tbody id="pesRows"></tbody></table>
+      <div class="empty" id="pesEmpty">Belum ada pesanan.</div></div>
+  </section>
+
+  <!-- LEADS -->
+  <section class="page" id="page-leads">
+    <div class="head"><div><h1>Leads (Sedang Diproses)</h1><div class="sub">Calon pelanggan & estimasi nilai</div></div>
+      <button class="btn" onclick="openLead()">+ Tambah Lead</button></div>
+    <div class="toolbar">
+      <label class="tag">Periode:</label><input type="month" id="leadMonth" onchange="renderLeads()">
+      <label class="tag">Status:</label><select id="leadStatusF" onchange="renderLeads()"><option value="">Semua</option><option>Baru</option><option>Survei</option><option>Penawaran</option><option>Nego</option><option>Deal</option><option>Batal</option></select>
+      <label class="tag">PIC:</label><select id="leadPicF" onchange="renderLeads()"><option value="">Semua</option></select>
+    </div>
+    <div class="grid stats" id="leadStats" style="margin-bottom:15px"></div>
+    <div class="card"><table><thead><tr><th>Lead / Prospek</th><th>Kebutuhan</th><th>PIC</th><th>Sumber</th><th>Est. Nilai</th><th>Status</th><th></th></tr></thead>
+      <tbody id="leadRows"></tbody></table>
+      <div class="empty" id="leadEmpty">Belum ada lead untuk filter ini.</div></div>
+  </section>
+
+  <!-- TASKS -->
+  <section class="page" id="page-tasks">
+    <div class="head"><div><h1>Tugas & Distribusi</h1><div class="sub">Seret kartu antar kolom untuk ubah status</div></div>
+      <button class="btn" onclick="openTask()">+ Tambah Tugas</button></div>
+    <div class="toolbar"><label class="tag">Filter elite:</label><select id="taskFilter" onchange="renderKanban()"><option value="">Semua</option></select></div>
+    <div class="kanban" id="kanban"></div>
+  </section>
+
+  <!-- KEUANGAN -->
+  <section class="page" id="page-keuangan">
+    <div class="head"><div><h1>Keuangan</h1><div class="sub">Buku kas, belanja bahan, upah & laba per pesanan</div></div>
+      <button class="btn" onclick="openTrx()">+ Tambah Transaksi</button></div>
+    <div class="toolbar">
+      <label class="tag">Periode:</label><input type="month" id="keuMonth" onchange="renderKeu()">
+      <label class="tag">Jenis:</label><select id="keuJenisF" onchange="renderKeu()"><option value="">Semua</option><option value="masuk">Masuk</option><option value="keluar">Keluar</option></select>
+      <label class="tag">Kategori:</label><select id="keuKatF" onchange="renderKeu()"><option value="">Semua</option><option>Belanja Bahan</option><option>Upah</option><option>Operasional</option><option>Marketing</option><option>DP Pesanan</option><option>Pelunasan</option><option>Lainnya</option></select>
+    </div>
+    <div class="grid stats" id="keuStats" style="margin-bottom:15px"></div>
+    <div class="grid" style="grid-template-columns:1.2fr 1fr;align-items:start">
+      <div class="card"><div class="sectit">Transaksi</div>
+        <table><thead><tr><th>Tgl</th><th>Jenis</th><th>Kategori</th><th>Keterangan</th><th style="text-align:right">Jumlah</th><th></th></tr></thead><tbody id="keuRows"></tbody></table>
+        <div class="empty" id="keuEmpty">Belum ada transaksi.</div></div>
+      <div class="card"><div class="sectit">Pengeluaran per Kategori (bln)</div><div id="keuKat"></div>
+        <div class="sectit" style="margin-top:18px">Laba per Pesanan</div>
+        <table><thead><tr><th>Pesanan</th><th>Nilai</th><th>Modal</th><th>Laba</th><th>Margin</th></tr></thead><tbody id="labaRows"></tbody></table>
+        <div class="empty" id="labaEmpty">Belum ada pesanan.</div></div>
+    </div>
+  </section>
+
+  <!-- BARANG -->
+  <section class="page" id="page-barang">
+    <div class="head"><div><h1>Barang / Material</h1><div class="sub">Master kode & harga bahan — <span id="barCount">0</span> item</div></div>
+      <button class="btn" onclick="openBarang()">+ Tambah Barang</button></div>
+    <div class="toolbar"><label class="tag">Cari:</label><input id="barSearch" placeholder="kode / nama material" oninput="renderBarang()"></div>
+    <div class="card"><table><thead><tr><th>Kode</th><th>Material</th><th>Harga</th><th></th></tr></thead>
+      <tbody id="barRows"></tbody></table>
+      <div class="empty" id="barEmpty">Belum ada barang.</div></div>
+  </section>
+</main>
+
+<div class="overlay" id="overlay"><div class="modal" id="modal"></div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+/* ====== KONFIGURASI ONLINE (mode web/cloud) ====== */
+const SUPABASE_URL='https://mifdxxqiajdchfggbyjn.supabase.co';
+const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1pZmR4eHFpYWpkY2hmZ2dieWpuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE5Njg3NDIsImV4cCI6MjA5NzU0NDc0Mn0.XaggjESIGM0rUDZ70YS2Jr2f8mltI1gk8fZyu9nPg-k';
+const ROW_ID=2; // baris data khusus aplikasi mebel
+/* ================================================= */
+const KEY='mmbtim_v1';
+const ELITE_IDS=[1,2,3]; // Distribusi tugas: Sunsun, Syamil, Faikar
+const COLORS=['#b45309','#a855f7','#22c55e','#f59e0b','#ec4899','#14b8a6','#ef4444','#6366f1','#eab308','#f97316'];
+const TIPE=['Pimpinan','Direktur','Manager','Marketing','Admin/Keuangan','Gambar','Mandor','Tukang','Finishing','Kenek','Sopir'];
+/* Akun yang boleh masuk & input (login). Ganti sandi di sini bila perlu. */
+const USERS={'Pimpinan':'123','Direktur':'direktur123','Manager':'manager123','Marketing':'marketing123','Bagian Gambar':'gambar123','Bendahara':'bendahara123'};
+let currentUser=null;
+let db=load();
+
+function load(){
+  const raw=localStorage.getItem(KEY);
+  if(raw){try{return JSON.parse(raw)}catch(e){}}
+  return {
+    targetBulanan:500000000,
+    karyawan:[
+      {id:1,name:'Sunsun',role:'Pimpinan',tipe:'Pimpinan',contact:'082126033801',color:COLORS[0]},
+      {id:2,name:'Syamil',role:'Direktur',tipe:'Direktur',contact:'-',color:COLORS[1]},
+      {id:3,name:'Faikar',role:'Bagian Gambar',tipe:'Gambar',contact:'-',color:COLORS[2]}
+    ],
+    pelanggan:[],
+    pesanan:[],
+    leads:[],
+    transaksi:[],
+    barang:[],
+    tasks:[
+      {id:11,title:'Aktifkan kembali Google Ads (channel lead terbukti)',assignee:1,status:'todo',due:''},
+      {id:12,title:'Buat katalog produk + foto hasil kerja untuk marketing',assignee:2,status:'todo',due:''},
+      {id:13,title:'Susun SOP survei → desain → produksi → instalasi',assignee:3,status:'todo',due:''}
+    ],
+    seq:20
+  };
+}
+/* ---------- PENYIMPANAN ---------- */
+let saveTimer=null;
+function setStore(txt,c){const el=document.getElementById('storeStatus');if(!el)return;el.textContent=txt;el.className='pill '+(c||'gray');el.style.display='block';el.style.textAlign='center';el.style.marginBottom='9px';}
+let sb=null, cloud=false, cloudTimer=null;
+function onlineMode(){return SUPABASE_URL && SUPABASE_KEY}
+async function loadCloud(){try{const{data}=await sb.from('appdata').select('data').eq('id',ROW_ID).single();if(data&&data.data&&data.data.karyawan){db=data.data;if(!db.targetBulanan)db.targetBulanan=500000000;if(!db.transaksi)db.transaksi=[];if(!db.barang)db.barang=[];localStorage.setItem(KEY,JSON.stringify(db));renderAll();}setStore('Online ✓','green');}catch(e){setStore('Gagal muat online','red');}}
+async function saveCloud(){try{await sb.from('appdata').upsert({id:ROW_ID,data:db});setStore('Tersimpan online ✓','green');}catch(e){setStore('Gagal simpan online','red');}}
+function save(){localStorage.setItem(KEY,JSON.stringify(db));
+  if(cloud){clearTimeout(cloudTimer);cloudTimer=setTimeout(saveCloud,600);}}
+function exportData(){const blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='mmbtim-data.json';a.click();}
+function importData(ev){if(RO())return;const file=ev.target.files[0];if(!file)return;const rd=new FileReader();rd.onload=()=>{try{const data=JSON.parse(rd.result);if(data&&data.karyawan){db=data;localStorage.setItem(KEY,JSON.stringify(db));if(cloud)saveCloud();renderAll();alert('Data berhasil dimuat.');}else alert('File tidak valid.');}catch(e){alert('File tidak valid.');}};rd.readAsText(file);ev.target.value='';}
+async function connectAndLoad(){
+  if(onlineMode()){
+    try{sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);cloud=true;setStore('Menghubungkan…','amber');await loadCloud();}
+    catch(e){setStore('Konfigurasi online salah','red');}
+  } else {setStore('Lokal (browser)','gray');}
+}
+function RO(){return currentUser==='Lihat saja'}
+function canFinView(){return currentUser==='Pimpinan'||currentUser==='Direktur'}
+function canFinEdit(){return currentUser==='Direktur'}
+function applyAccess(){const b=document.body;b.classList.toggle('ro',RO());b.classList.toggle('finview',canFinView());b.classList.toggle('finedit',canFinEdit());}
+function showUserBox(){const el=document.getElementById('userBox');if(el&&currentUser)el.innerHTML=`<div style="color:var(--muted);margin-bottom:4px">👤 ${currentUser}${RO()?' <span class="pill gray">lihat</span>':''}</div><button class="btn ghost sm" style="width:100%;margin-bottom:8px" onclick="logout()">Keluar</button>`;}
+function logout(){localStorage.removeItem('mmbtim_user');location.reload();}
+function enter(role){currentUser=role;localStorage.setItem('mmbtim_user',role);const g=document.getElementById('loginGate');if(g)g.remove();showUserBox();applyAccess();connectAndLoad();}
+function doLogin(){
+  const role=document.getElementById('lg_role').value, pass=document.getElementById('lg_pass').value;
+  if(USERS[role]&&pass===USERS[role]){enter(role);}
+  else{const e=document.getElementById('lg_err');if(e)e.style.display='block';}
+}
+function viewOnly(){enter('Lihat saja');}
+function showLogin(){
+  const opts=Object.keys(USERS).map(r=>`<option>${r}</option>`).join('');
+  const d=document.createElement('div');d.id='loginGate';
+  d.style.cssText='position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:100;padding:16px';
+  d.innerHTML=`<div class="card" style="max-width:360px;width:100%">
+    <div class="logo" style="margin-bottom:16px"><span class="dot">M</span><div>MMB-TIM<small>Manajemen Mebel & Produksi</small></div></div>
+    <div class="field"><label>Masuk sebagai</label><select id="lg_role">${opts}</select></div>
+    <div class="field"><label>Kata sandi</label><input type="password" id="lg_pass" placeholder="kata sandi"></div>
+    <div id="lg_err" class="tag" style="color:#f87171;display:none;margin-bottom:8px">Kata sandi salah, coba lagi.</div>
+    <button class="btn" style="width:100%" onclick="doLogin()">Masuk</button>
+    <button class="btn ghost" style="width:100%;margin-top:8px" onclick="viewOnly()">👁 Lihat saja (tanpa input)</button>`;
+  document.body.appendChild(d);
+  const p=document.getElementById('lg_pass');if(p)p.addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+}
+async function initStorage(){
+  const saved=localStorage.getItem('mmbtim_user');
+  if(saved&&(USERS[saved]||saved==='Lihat saja')){currentUser=saved;showUserBox();applyAccess();await connectAndLoad();}
+  else{showLogin();}
+}
+function nid(){return db.seq++}
+function initials(n){return n.trim().split(/\s+/).slice(0,2).map(w=>w[0]).join('').toUpperCase()}
+function kar(id){return db.karyawan.find(m=>m.id===id)}
+function thisMonth(){return new Date().toISOString().slice(0,7)}
+function rp(n){if(!n)return 'Rp0';if(n>=1e9)return 'Rp'+(n/1e9).toFixed(n%1e9?1:0).replace('.',',')+' M';if(n>=1e6)return 'Rp'+(n/1e6).toFixed(0)+' jt';return 'Rp'+n.toLocaleString('id-ID')}
+function monthLabel(m){if(!m)return '';const[y,mm]=m.split('-');return ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'][+mm-1]+' '+y}
+
+/* Navigation */
+document.getElementById('nav').addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b)return;
+  document.querySelectorAll('#nav button').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active');
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('show'));
+  document.getElementById('page-'+b.dataset.page).classList.add('show');
+});
+
+function fillMonthInputs(){['dashMonth','leadMonth','keuMonth'].forEach(id=>{const el=document.getElementById(id);if(el&&!el.value)el.value=thisMonth();});}
+function elites(){return db.karyawan.filter(m=>ELITE_IDS.includes(m.id))}
+function fillPicSelects(){
+  const allOpts='<option value="">Semua</option>'+db.karyawan.map(m=>`<option value="${m.id}">${m.name}</option>`).join('');
+  const eliteOpts='<option value="">Semua</option>'+elites().map(m=>`<option value="${m.id}">${m.name}</option>`).join('');
+  [['taskFilter',eliteOpts],['leadPicF',allOpts],['pesPicF',allOpts]].forEach(([id,opts])=>{const el=document.getElementById(id);const v=el.value;el.innerHTML=opts;el.value=v;});
+}
+
+/* ---------- DASHBOARD ---------- */
+function omsetBulan(mo){return db.pesanan.filter(p=>p.stage==='Selesai'&&(p.date||'').slice(0,7)===mo).reduce((s,p)=>s+(+p.value||0),0)}
+function renderDash(){
+  document.getElementById('todayStr').textContent=new Date().toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  const mo=document.getElementById('dashMonth').value||thisMonth();
+  document.getElementById('dashMonthLbl').textContent=monthLabel(mo);
+  const omset=omsetBulan(mo);
+  const target=db.targetBulanan||500000000;
+  const aktif=db.pesanan.filter(p=>p.stage!=='Selesai'&&p.stage!=='Batal').length;
+  const leadsAktif=db.leads.filter(l=>l.status!=='Deal'&&l.status!=='Batal').length;
+  const cards=[
+    {label:'Omset Bulan Ini',num:rp(omset),ico:'₿',c:'green'},
+    {label:'Target Bulanan',num:rp(target),ico:'◎',c:'amber'},
+    {label:'Pesanan Aktif',num:aktif+' <small>order</small>',ico:'▤',c:'blue'},
+    {label:'Leads Diproses',num:leadsAktif+' <small>lead</small>',ico:'◔',c:'purple'}
+  ];
+  document.getElementById('statCards').innerHTML=cards.map(c=>
+    `<div class="card stat"><div class="ico2 pill ${c.c}">${c.ico}</div><div class="label">${c.label}</div><div class="num">${c.num}</div></div>`).join('');
+  const pct=target?Math.min(100,Math.round(omset/target*100)):0;
+  document.getElementById('teamOmset').innerHTML=
+    `<div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px"><span>${rp(omset)} dari ${rp(target)}</span><b>${pct}%</b></div>
+     <div class="bar" style="height:14px"><span style="width:${pct}%;background:linear-gradient(90deg,#b45309,#f59e0b)"></span></div>
+     <div class="tag" style="margin-top:8px">Omset dihitung otomatis dari pesanan berstatus tahap "Selesai" di bulan ini.</div>`;
+  const stages=['Survei','Desain','Produksi','Instalasi','Selesai'];
+  const sc={Survei:'blue',Desain:'purple',Produksi:'amber',Instalasi:'teal',Selesai:'green'};
+  const maxS=Math.max(1,...stages.map(s=>db.pesanan.filter(p=>p.stage===s).length));
+  document.getElementById('stageBox').innerHTML=stages.map(s=>{const n=db.pesanan.filter(p=>p.stage===s).length;
+    return `<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:3px"><span><span class="pill ${sc[s]}">${s}</span></span><b>${n}</b></div><div class="bar"><span style="width:${n/maxS*100}%;background:var(--${sc[s]})"></span></div></div>`;
+  }).join('');
+  const lstages=['Baru','Survei','Penawaran','Nego','Deal'];
+  const lc={Baru:'gray',Survei:'blue',Penawaran:'purple',Nego:'amber',Deal:'green'};
+  const lAll=db.leads.filter(l=>(l.date||'').slice(0,7)===mo);
+  const maxL=Math.max(1,...lstages.map(s=>lAll.filter(l=>l.status===s).length));
+  document.getElementById('funnelBox').innerHTML=lstages.map(s=>{const n=lAll.filter(l=>l.status===s).length;
+    return `<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:3px"><span><span class="pill ${lc[s]}">${s}</span></span><b>${n}</b></div><div class="bar"><span style="width:${n/maxL*100}%"></span></div></div>`;
+  }).join('')||'<div class="empty">Belum ada lead.</div>';
+}
+
+/* ---------- KARYAWAN ---------- */
+function renderKar(){
+  document.getElementById('karEmpty').style.display=db.karyawan.length?'none':'block';
+  document.getElementById('karRows').innerHTML=db.karyawan.map(m=>{
+    const elite=ELITE_IDS.includes(m.id);
+    return `<tr><td><div class="who"><span class="avatar" style="background:${m.color}">${initials(m.name)}</span>${m.name} ${elite?'<span class="pill amber" style="margin-left:4px">elite</span>':''}</div></td>
+    <td><span class="pill blue">${m.tipe||'-'}</span></td><td>${m.role||'-'}</td><td>${m.contact||'-'}</td>
+    <td><div class="row-actions"><button class="btn ghost sm" onclick="openKar(${m.id})">Edit</button><button class="btn danger sm" onclick="delKar(${m.id})">Hapus</button></div></td></tr>`;
+  }).join('');
+}
+
+/* ---------- PELANGGAN ---------- */
+function renderPel(){
+  const q=(document.getElementById('pelSearch').value||'').toLowerCase();
+  let rows=db.pelanggan;
+  if(q)rows=rows.filter(p=>(p.name+' '+(p.contact||'')).toLowerCase().includes(q));
+  document.getElementById('pelEmpty').style.display=rows.length?'none':'block';
+  document.getElementById('pelRows').innerHTML=rows.map(p=>
+    `<tr><td><b>${p.name}</b></td><td>${p.contact||'-'}</td><td>${p.address||'-'}</td><td>${rp(p.total||0)}</td><td class="tag">${p.note||'-'}</td>
+    <td><div class="row-actions"><button class="btn ghost sm" onclick="openPel(${p.id})">Edit</button><button class="btn danger sm" onclick="delPel(${p.id})">Hapus</button></div></td></tr>`).join('');
+}
+
+/* ---------- PESANAN ---------- */
+function renderPes(){
+  const sf=document.getElementById('pesStageF').value, pf=document.getElementById('pesPicF').value;
+  let rows=db.pesanan.slice();
+  if(sf)rows=rows.filter(p=>p.stage===sf);
+  if(pf)rows=rows.filter(p=>p.pic===+pf);
+  document.getElementById('pesEmpty').style.display=rows.length?'none':'block';
+  const sc={Survei:'blue',Desain:'purple',Produksi:'amber',Instalasi:'teal',Selesai:'green',Batal:'red'};
+  document.getElementById('pesRows').innerHTML=rows.map(p=>{
+    const m=kar(p.pic);
+    return `<tr><td><b>${p.owner}</b><div class="tag">${p.date||''}</div></td><td>${p.item||'-'}</td><td>${rp(p.value)}</td>
+      <td><span class="tag">${p.pay||'-'}</span></td>
+      <td>${m?`<div class="who"><span class="avatar" style="width:24px;height:24px;font-size:10px;background:${m.color}">${initials(m.name)}</span>${m.name}</div>`:'-'}</td>
+      <td><span class="pill ${sc[p.stage]||'gray'}">${p.stage}</span></td>
+      <td><div class="row-actions"><button class="btn ghost sm" onclick="openPes(${p.id})">Edit</button><button class="btn danger sm" onclick="delPes(${p.id})">Hapus</button></div></td></tr>`;
+  }).join('');
+}
+
+/* ---------- LEADS ---------- */
+function renderLeads(){
+  const mo=document.getElementById('leadMonth').value||thisMonth();
+  const sf=document.getElementById('leadStatusF').value, pf=document.getElementById('leadPicF').value;
+  let rows=db.leads.filter(l=>(l.date||'').slice(0,7)===mo);
+  if(sf)rows=rows.filter(l=>l.status===sf);
+  if(pf)rows=rows.filter(l=>l.pic===+pf);
+  const all=db.leads.filter(l=>(l.date||'').slice(0,7)===mo);
+  const deal=all.filter(l=>l.status==='Deal');
+  const stats=[
+    {label:'Total Lead',num:all.length,c:'blue'},
+    {label:'Deal',num:deal.length,c:'green'},
+    {label:'Konversi',num:(all.length?Math.round(deal.length/all.length*100):0)+'%',c:'purple'},
+    {label:'Est. Nilai Deal',num:rp(deal.reduce((s,l)=>s+(+l.value||0),0)),c:'amber'}
+  ];
+  document.getElementById('leadStats').innerHTML=stats.map(s=>`<div class="card stat"><div class="label">${s.label}</div><div class="num">${s.num}</div></div>`).join('');
+  document.getElementById('leadEmpty').style.display=rows.length?'none':'block';
+  const stc={Baru:'gray',Survei:'blue',Penawaran:'purple',Nego:'amber',Deal:'green',Batal:'red'};
+  document.getElementById('leadRows').innerHTML=rows.map(l=>{
+    const m=kar(l.pic);
+    return `<tr><td><b>${l.name}</b><div class="tag">${l.date}${l.contact?' · '+l.contact:''}</div></td><td>${l.need||'-'}</td>
+      <td>${m?`<div class="who"><span class="avatar" style="width:24px;height:24px;font-size:10px;background:${m.color}">${initials(m.name)}</span>${m.name}</div>`:'-'}</td>
+      <td><span class="pill ${l.source==='Ads'?'teal':'gray'}">${l.source}</span></td><td>${rp(l.value)}</td>
+      <td><span class="pill ${stc[l.status]||'gray'}">${l.status}</span></td>
+      <td><div class="row-actions"><button class="btn ghost sm" onclick="openLead(${l.id})">Edit</button><button class="btn danger sm" onclick="delLead(${l.id})">Hapus</button></div></td></tr>`;
+  }).join('');
+}
+
+/* ---------- TASKS ---------- */
+function renderKanban(){
+  const f=document.getElementById('taskFilter').value;
+  const cols=[['todo','Akan Dikerjakan'],['progress','Sedang Dikerjakan'],['done','Selesai']];
+  document.getElementById('kanban').innerHTML=cols.map(([k,label])=>{
+    let ts=db.tasks.filter(t=>t.status===k);if(f)ts=ts.filter(t=>t.assignee===+f);
+    return `<div class="col" data-col="${k}"><h3>${label} <span>${ts.length}</span></h3>${ts.map(t=>{
+      const m=kar(t.assignee);
+      return `<div class="task" draggable="true" data-id="${t.id}"><div class="t">${t.title}</div>
+        <div class="meta"><span>${m?`<span class="avatar" style="width:20px;height:20px;font-size:9px;background:${m.color}">${initials(m.name)}</span>`:'—'} ${m?m.name:'Tanpa PIC'}</span>
+        <span>${t.due?'📅'+t.due.slice(5):''} <button class="btn ghost sm" onclick="openTask(${t.id})">✎</button> <button class="btn danger sm" onclick="delTask(${t.id})">✕</button></span></div></div>`;
+    }).join('')||'<div class="empty" style="padding:12px">Kosong</div>'}</div>`;
+  }).join('');
+  bindDnD();
+}
+function bindDnD(){
+  let dragId=null;
+  document.querySelectorAll('.task').forEach(el=>{
+    el.addEventListener('dragstart',()=>{dragId=+el.dataset.id;el.classList.add('drag')});
+    el.addEventListener('dragend',()=>el.classList.remove('drag'));
+  });
+  document.querySelectorAll('.col').forEach(col=>{
+    col.addEventListener('dragover',e=>{e.preventDefault();col.classList.add('over')});
+    col.addEventListener('dragleave',()=>col.classList.remove('over'));
+    col.addEventListener('drop',e=>{e.preventDefault();col.classList.remove('over');if(RO())return;
+      const t=db.tasks.find(x=>x.id===dragId);if(t){t.status=col.dataset.col;save();renderKanban();}});
+  });
+}
+
+/* ---------- MODALS ---------- */
+const overlay=document.getElementById('overlay'),modal=document.getElementById('modal');
+function closeModal(){overlay.classList.remove('show')}
+overlay.addEventListener('click',e=>{if(e.target===overlay)closeModal()});
+
+function openKar(id){
+  const m=id?kar(id):{name:'',role:'',tipe:'Tukang',contact:''};
+  const opts=TIPE.map(t=>`<option ${m.tipe===t?'selected':''}>${t}</option>`).join('');
+  modal.innerHTML=`<h2>${id?'Edit':'Tambah'} Karyawan</h2>
+    <div class="field"><label>Nama</label><input id="k_name" value="${m.name}"></div>
+    <div class="two"><div class="field"><label>Tipe</label><select id="k_tipe">${opts}</select></div>
+    <div class="field"><label>Peran / Jabatan</label><input id="k_role" value="${m.role||''}"></div></div>
+    <div class="field"><label>Kontak</label><input id="k_contact" value="${m.contact||''}"></div>
+    <div class="actions"><button class="btn ghost" onclick="closeModal()">Batal</button><button class="btn" onclick="saveKar(${id||0})">Simpan</button></div>`;
+  overlay.classList.add('show');
+}
+function saveKar(id){const name=k_name.value.trim();if(!name)return alert('Nama wajib diisi');
+  const d={name,tipe:k_tipe.value,role:k_role.value.trim(),contact:k_contact.value.trim()};
+  if(id)Object.assign(kar(id),d);else db.karyawan.push({id:nid(),...d,color:COLORS[db.karyawan.length%COLORS.length]});
+  save();closeModal();renderAll();}
+function delKar(id){if(ELITE_IDS.includes(id))return alert('Karyawan elite tidak bisa dihapus.');if(!confirm('Hapus karyawan ini?'))return;db.karyawan=db.karyawan.filter(m=>m.id!==id);save();renderAll();}
+
+function openPel(id){
+  const p=id?db.pelanggan.find(x=>x.id===id):{name:'',contact:'',address:'',total:0,note:''};
+  modal.innerHTML=`<h2>${id?'Edit':'Tambah'} Pelanggan</h2>
+    <div class="field"><label>Nama</label><input id="pl_name" value="${p.name}"></div>
+    <div class="two"><div class="field"><label>Kontak</label><input id="pl_contact" value="${p.contact||''}"></div>
+    <div class="field"><label>Total Belanja (Rp)</label><input type="number" id="pl_total" value="${p.total||0}"></div></div>
+    <div class="field"><label>Alamat</label><input id="pl_addr" value="${p.address||''}"></div>
+    <div class="field"><label>Catatan</label><textarea id="pl_note" rows="2">${p.note||''}</textarea></div>
+    <div class="actions"><button class="btn ghost" onclick="closeModal()">Batal</button><button class="btn" onclick="savePel(${id||0})">Simpan</button></div>`;
+  overlay.classList.add('show');
+}
+function savePel(id){const name=pl_name.value.trim();if(!name)return alert('Nama wajib diisi');
+  const d={name,contact:pl_contact.value.trim(),address:pl_addr.value.trim(),total:+pl_total.value||0,note:pl_note.value.trim()};
+  if(id)Object.assign(db.pelanggan.find(x=>x.id===id),d);else db.pelanggan.push({id:nid(),...d});save();closeModal();renderPel();renderDash();}
+function delPel(id){if(!confirm('Hapus pelanggan ini?'))return;db.pelanggan=db.pelanggan.filter(p=>p.id!==id);save();renderPel();}
+
+function openPes(id){
+  const mo=thisMonth();
+  const p=id?db.pesanan.find(x=>x.id===id):{owner:'',item:'',value:0,pay:'30-40-30',pic:elites()[0]?.id,stage:'Survei',date:mo+'-'+String(new Date().getDate()).padStart(2,'0')};
+  const popts=db.karyawan.map(m=>`<option value="${m.id}" ${p.pic===m.id?'selected':''}>${m.name}</option>`).join('');
+  const sopts=['Survei','Desain','Produksi','Instalasi','Selesai','Batal'].map(s=>`<option ${p.stage===s?'selected':''}>${s}</option>`).join('');
+  modal.innerHTML=`<h2>${id?'Edit':'Tambah'} Pesanan</h2>
+    <div class="field"><label>Owner / Pemilik</label><input id="ps_owner" value="${p.owner}" placeholder="nama pelanggan"></div>
+    <div class="field"><label>Item / Jenis Furniture</label><input id="ps_item" value="${p.item||''}" placeholder="mis. kitchen set, lemari pakaian"></div>
+    <div class="two"><div class="field"><label>Nilai (Rp)</label><input type="number" id="ps_value" value="${p.value}"></div>
+    <div class="field"><label>Skema Pembayaran</label><input id="ps_pay" value="${p.pay||''}" placeholder="mis. 30-40-30"></div></div>
+    <div class="two"><div class="field"><label>PIC / Penanggung Jawab</label><select id="ps_pic">${popts}</select></div>
+    <div class="field"><label>Tahap Produksi</label><select id="ps_stage">${sopts}</select></div></div>
+    <div class="field"><label>Tanggal</label><input type="date" id="ps_date" value="${p.date}"></div>
+    <div class="tag">Saat tahap "Selesai", nilai pesanan dihitung sebagai omset bulan tsb.</div>
+    <div class="actions" style="margin-top:14px"><button class="btn ghost" onclick="closeModal()">Batal</button><button class="btn" onclick="savePes(${id||0})">Simpan</button></div>`;
+  overlay.classList.add('show');
+}
+function savePes(id){const owner=ps_owner.value.trim();if(!owner)return alert('Owner wajib diisi');
+  const d={owner,item:ps_item.value.trim(),value:+ps_value.value||0,pay:ps_pay.value.trim(),pic:+ps_pic.value,stage:ps_stage.value,date:ps_date.value};
+  if(id)Object.assign(db.pesanan.find(x=>x.id===id),d);else db.pesanan.push({id:nid(),...d});save();closeModal();renderPes();renderDash();}
+function delPes(id){if(!confirm('Hapus pesanan ini?'))return;db.pesanan=db.pesanan.filter(p=>p.id!==id);save();renderPes();renderDash();}
+
+function openLead(id){
+  const mo=document.getElementById('leadMonth').value||thisMonth();
+  const l=id?db.leads.find(x=>x.id===id):{name:'',contact:'',need:'',source:'Ads',value:0,status:'Baru',pic:elites()[0]?.id,date:mo+'-'+String(new Date().getDate()).padStart(2,'0')};
+  const popts=db.karyawan.map(m=>`<option value="${m.id}" ${l.pic===m.id?'selected':''}>${m.name}</option>`).join('');
+  modal.innerHTML=`<h2>${id?'Edit':'Tambah'} Lead</h2>
+    <div class="field"><label>Nama Lead / Prospek</label><input id="l_name" value="${l.name}"></div>
+    <div class="two"><div class="field"><label>Kontak</label><input id="l_contact" value="${l.contact||''}"></div>
+    <div class="field"><label>PIC</label><select id="l_pic">${popts}</select></div></div>
+    <div class="field"><label>Kebutuhan</label><input id="l_need" value="${l.need||''}" placeholder="mis. kitchen set 3m"></div>
+    <div class="two"><div class="field"><label>Sumber Lead</label><select id="l_src"><option ${l.source==='Ads'?'selected':''}>Ads</option><option ${l.source==='Referral'?'selected':''}>Referral</option><option ${l.source==='Sosmed'?'selected':''}>Sosmed</option><option ${l.source==='Sendiri'?'selected':''}>Sendiri</option></select></div>
+    <div class="field"><label>Tanggal</label><input type="date" id="l_date" value="${l.date}"></div></div>
+    <div class="two"><div class="field"><label>Est. Nilai (Rp)</label><input type="number" id="l_value" value="${l.value}"></div>
+    <div class="field"><label>Status</label><select id="l_status">${['Baru','Survei','Penawaran','Nego','Deal','Batal'].map(s=>`<option ${l.status===s?'selected':''}>${s}</option>`).join('')}</select></div></div>
+    <div class="actions" style="margin-top:14px"><button class="btn ghost" onclick="closeModal()">Batal</button><button class="btn" onclick="saveLead(${id||0})">Simpan</button></div>`;
+  overlay.classList.add('show');
+}
+function saveLead(id){const name=l_name.value.trim();if(!name)return alert('Nama lead wajib diisi');
+  const d={name,contact:l_contact.value.trim(),need:l_need.value.trim(),source:l_src.value,value:+l_value.value||0,status:l_status.value,pic:+l_pic.value,date:l_date.value};
+  if(id)Object.assign(db.leads.find(x=>x.id===id),d);else db.leads.push({id:nid(),...d});save();closeModal();renderLeads();renderDash();}
+function delLead(id){if(!confirm('Hapus lead ini?'))return;db.leads=db.leads.filter(l=>l.id!==id);save();renderLeads();renderDash();}
+
+function openTask(id){
+  const t=id?db.tasks.find(x=>x.id===id):{title:'',assignee:ELITE_IDS[0],status:'todo',due:''};
+  const opts=elites().map(m=>`<option value="${m.id}" ${t.assignee===m.id?'selected':''}>${m.name}</option>`).join('');
+  modal.innerHTML=`<h2>${id?'Edit':'Tambah'} Tugas</h2>
+    <div class="field"><label>Judul Tugas</label><input id="t_title" value="${t.title}"></div>
+    <div class="two"><div class="field"><label>Penanggung Jawab</label><select id="t_ass">${opts||'<option value="">—</option>'}</select></div>
+    <div class="field"><label>Tenggat</label><input type="date" id="t_due" value="${t.due||''}"></div></div>
+    <div class="field"><label>Status</label><select id="t_status">
+      <option value="todo" ${t.status==='todo'?'selected':''}>Akan Dikerjakan</option>
+      <option value="progress" ${t.status==='progress'?'selected':''}>Sedang Dikerjakan</option>
+      <option value="done" ${t.status==='done'?'selected':''}>Selesai</option></select></div>
+    <div class="actions"><button class="btn ghost" onclick="closeModal()">Batal</button><button class="btn" onclick="saveTask(${id||0})">Simpan</button></div>`;
+  overlay.classList.add('show');
+}
+function saveTask(id){const title=t_title.value.trim();if(!title)return alert('Judul wajib diisi');
+  const d={title,assignee:t_ass.value?+t_ass.value:null,status:t_status.value,due:t_due.value};
+  if(id)Object.assign(db.tasks.find(x=>x.id===id),d);else db.tasks.push({id:nid(),...d});save();closeModal();renderKanban();}
+function delTask(id){if(!confirm('Hapus tugas ini?'))return;db.tasks=db.tasks.filter(t=>t.id!==id);save();renderKanban();}
+
+/* ---------- KEUANGAN ---------- */
+function renderKeu(){
+  if(!document.getElementById('keuRows'))return;
+  const mo=document.getElementById('keuMonth').value||thisMonth();
+  const all=db.transaksi||[];
+  const sum=arr=>arr.reduce((s,t)=>s+(+t.jumlah||0),0);
+  const saldo=all.reduce((s,t)=>s+(t.jenis==='masuk'?+t.jumlah:-(+t.jumlah)),0);
+  const inB=sum(all.filter(t=>t.jenis==='masuk'&&(t.tanggal||'').slice(0,7)===mo));
+  const outB=sum(all.filter(t=>t.jenis==='keluar'&&(t.tanggal||'').slice(0,7)===mo));
+  const cards=[
+    {label:'Saldo Kas',num:rp(saldo),c:saldo>=0?'green':'red'},
+    {label:'Masuk (bln)',num:rp(inB),c:'blue'},
+    {label:'Keluar (bln)',num:rp(outB),c:'amber'},
+    {label:'Arus Kas Bersih (bln)',num:rp(inB-outB),c:(inB-outB)>=0?'green':'red'}
+  ];
+  document.getElementById('keuStats').innerHTML=cards.map(c=>`<div class="card stat"><div class="label">${c.label}</div><div class="num" style="color:var(--${c.c})">${c.num}</div></div>`).join('');
+  const kk=['Belanja Bahan','Upah','Operasional','Marketing','Lainnya'];
+  const kv=k=>sum(all.filter(t=>t.jenis==='keluar'&&t.kategori===k&&(t.tanggal||'').slice(0,7)===mo));
+  const maxK=Math.max(1,...kk.map(kv));
+  document.getElementById('keuKat').innerHTML=kk.map(k=>{const v=kv(k);return `<div style="margin-bottom:11px"><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:3px"><span>${k}</span><b>${rp(v)}</b></div><div class="bar"><span style="width:${v/maxK*100}%;background:var(--amber)"></span></div></div>`;}).join('');
+  const jf=document.getElementById('keuJenisF').value, kf=document.getElementById('keuKatF').value;
+  let rows=all.filter(t=>(t.tanggal||'').slice(0,7)===mo);
+  if(jf)rows=rows.filter(t=>t.jenis===jf);
+  if(kf)rows=rows.filter(t=>t.kategori===kf);
+  rows=rows.slice().sort((a,b)=>(b.tanggal||'').localeCompare(a.tanggal||''));
+  document.getElementById('keuEmpty').style.display=rows.length?'none':'block';
+  document.getElementById('keuRows').innerHTML=rows.map(t=>{
+    const p=db.pesanan.find(x=>x.id===t.pesanan), m=kar(t.karyawan);
+    const ket=[t.catatan,m?('Upah '+m.name+(t.model?' ('+t.model+(t.model==='Harian'&&t.hari?` ${t.hari}h×${rp(t.tarif)}`:'')+')':'')):'',p?('utk '+p.owner):''].filter(Boolean).join(' · ');
+    return `<tr><td>${(t.tanggal||'').slice(5)}</td><td><span class="pill ${t.jenis==='masuk'?'green':'red'}">${t.jenis==='masuk'?'Masuk':'Keluar'}</span></td><td>${t.kategori}</td><td class="tag">${ket||'-'}</td><td style="text-align:right">${rp(t.jumlah)}</td>
+      <td><div class="row-actions"><button class="btn ghost sm" onclick="openTrx(${t.id})">Edit</button><button class="btn danger sm" onclick="delTrx(${t.id})">Hapus</button></div></td></tr>`;
+  }).join('');
+  const lap=db.pesanan.filter(p=>p.stage!=='Batal').map(p=>{const modal=sum(all.filter(t=>t.jenis==='keluar'&&t.pesanan===p.id));const nilai=+p.value||0;const laba=nilai-modal;const mar=nilai?Math.round(laba/nilai*100):0;return {p,modal,nilai,laba,mar};});
+  document.getElementById('labaEmpty').style.display=lap.length?'none':'block';
+  document.getElementById('labaRows').innerHTML=lap.map(x=>{const cls=x.mar>=20?'green':x.mar>=0?'amber':'red';return `<tr><td><b>${x.p.owner}</b><div class="tag">${x.p.item||''}</div></td><td>${rp(x.nilai)}</td><td>${rp(x.modal)}</td><td>${rp(x.laba)}</td><td><span class="pill ${cls}">${x.mar}%</span></td></tr>`;}).join('');
+}
+function openTrx(id){if(!canFinEdit())return;
+  const mo=document.getElementById('keuMonth').value||thisMonth();
+  const t=id?db.transaksi.find(x=>x.id===id):{tanggal:mo+'-'+String(new Date().getDate()).padStart(2,'0'),jenis:'keluar',kategori:'Belanja Bahan',jumlah:0,metode:'Cash',pesanan:0,karyawan:0,model:'Harian',hari:0,tarif:0,catatan:''};
+  window._trx=t;
+  const popts='<option value="0">— tidak terkait —</option>'+db.pesanan.map(p=>`<option value="${p.id}" ${t.pesanan===p.id?'selected':''}>${p.owner}${p.item?' — '+p.item:''}</option>`).join('');
+  modal.innerHTML=`<h2>${id?'Edit':'Tambah'} Transaksi</h2>
+    <div class="two"><div class="field"><label>Tanggal</label><input type="date" id="x_tgl" value="${t.tanggal}"></div>
+    <div class="field"><label>Jenis</label><select id="x_jenis" onchange="trxJenis()"><option value="keluar" ${t.jenis==='keluar'?'selected':''}>Keluar</option><option value="masuk" ${t.jenis==='masuk'?'selected':''}>Masuk</option></select></div></div>
+    <div class="field"><label>Kategori</label><select id="x_kat" onchange="trxKat()"></select></div>
+    <div id="x_upah"></div>
+    <div class="two"><div class="field"><label>Jumlah (Rp)</label><input type="number" id="x_jml" value="${t.jumlah}"></div>
+    <div class="field"><label>Metode</label><select id="x_met"><option ${t.metode==='Cash'?'selected':''}>Cash</option><option ${t.metode==='Transfer'?'selected':''}>Transfer</option></select></div></div>
+    <div class="field"><label>Kaitkan Pesanan (opsional)</label><select id="x_pes">${popts}</select></div>
+    <div class="field"><label>Catatan</label><input id="x_cat" value="${t.catatan||''}"></div>
+    <div class="actions" style="margin-top:14px"><button class="btn ghost" onclick="closeModal()">Batal</button><button class="btn" onclick="saveTrx(${id||0})">Simpan</button></div>`;
+  overlay.classList.add('show');
+  trxJenis(true);
+}
+function trxJenis(init){
+  const j=document.getElementById('x_jenis').value;
+  const list=j==='masuk'?['DP Pesanan','Pelunasan','Lainnya']:['Belanja Bahan','Upah','Operasional','Marketing','Lainnya'];
+  const cur=init?window._trx.kategori:list[0];
+  document.getElementById('x_kat').innerHTML=list.map(k=>`<option ${k===cur?'selected':''}>${k}</option>`).join('');
+  trxKat();
+}
+function trxKat(){
+  const k=document.getElementById('x_kat').value, box=document.getElementById('x_upah'), t=window._trx;
+  if(k==='Upah'){
+    const kopts='<option value="0">— pilih karyawan —</option>'+db.karyawan.map(m=>`<option value="${m.id}" ${t.karyawan===m.id?'selected':''}>${m.name}</option>`).join('');
+    box.innerHTML=`<div class="two"><div class="field"><label>Karyawan</label><select id="x_kar">${kopts}</select></div>
+      <div class="field"><label>Model</label><select id="x_model" onchange="trxModel()"><option ${t.model==='Harian'?'selected':''}>Harian</option><option ${t.model==='Borongan'?'selected':''}>Borongan</option></select></div></div>
+      <div id="x_harian" class="two" style="${t.model==='Borongan'?'display:none':''}"><div class="field"><label>Jumlah Hari</label><input type="number" id="x_hari" value="${t.hari||0}" oninput="trxHitung()"></div>
+      <div class="field"><label>Tarif/Hari (Rp)</label><input type="number" id="x_tarif" value="${t.tarif||0}" oninput="trxHitung()"></div></div>`;
+  } else if(k==='Belanja Bahan'){
+    const bopts='<option value="">— pilih barang (opsional) —</option>'+(db.barang||[]).map((b,i)=>`<option value="${i}">${b.kode} — ${b.nama} (${rp(b.harga)})</option>`).join('');
+    box.innerHTML=`<div class="field"><label>Pilih Barang (isi harga & catatan otomatis)</label><select id="x_barang" onchange="trxBarang()">${bopts}</select></div>`;
+  } else { box.innerHTML=''; }
+}
+function trxBarang(){const i=document.getElementById('x_barang').value;if(i==='')return;const b=(db.barang||[])[+i];if(!b)return;document.getElementById('x_jml').value=b.harga;const c=document.getElementById('x_cat');if(c&&!c.value)c.value=b.kode+' '+b.nama;}
+function trxModel(){const harian=document.getElementById('x_model').value==='Harian';const h=document.getElementById('x_harian');if(h)h.style.display=harian?'':'none';if(harian)trxHitung();}
+function trxHitung(){const h=+document.getElementById('x_hari').value||0, tr=+document.getElementById('x_tarif').value||0;document.getElementById('x_jml').value=h*tr;}
+function saveTrx(id){if(!canFinEdit())return;
+  const kat=document.getElementById('x_kat').value;
+  const d={tanggal:document.getElementById('x_tgl').value,jenis:document.getElementById('x_jenis').value,kategori:kat,jumlah:+document.getElementById('x_jml').value||0,metode:document.getElementById('x_met').value,pesanan:+document.getElementById('x_pes').value||0,catatan:document.getElementById('x_cat').value.trim(),karyawan:0,model:'',hari:0,tarif:0};
+  if(kat==='Upah'){d.karyawan=+document.getElementById('x_kar').value||0;d.model=document.getElementById('x_model').value;if(d.model==='Harian'){d.hari=+document.getElementById('x_hari').value||0;d.tarif=+document.getElementById('x_tarif').value||0;}}
+  if(!d.jumlah)return alert('Jumlah wajib diisi');
+  if(id)Object.assign(db.transaksi.find(x=>x.id===id),d);else db.transaksi.push({id:nid(),...d});
+  save();closeModal();renderKeu();renderDash();}
+function delTrx(id){if(!canFinEdit())return;if(!confirm('Hapus transaksi ini?'))return;db.transaksi=db.transaksi.filter(t=>t.id!==id);save();renderKeu();}
+
+/* ---------- BARANG / MATERIAL ---------- */
+function renderBarang(){
+  if(!document.getElementById('barRows'))return;
+  const all=db.barang||[];
+  const cEl=document.getElementById('barCount');if(cEl)cEl.textContent=all.length;
+  const q=(document.getElementById('barSearch').value||'').toLowerCase();
+  let rows=all.map((b,i)=>({b,i}));
+  if(q)rows=rows.filter(x=>((x.b.kode||'')+' '+(x.b.nama||'')).toLowerCase().includes(q));
+  document.getElementById('barEmpty').style.display=rows.length?'none':'block';
+  document.getElementById('barRows').innerHTML=rows.map(x=>`<tr><td><b>${x.b.kode||''}</b></td><td>${x.b.nama||''}</td><td>${rp(x.b.harga)}</td>
+    <td><div class="row-actions"><button class="btn ghost sm" onclick="openBarang(${x.i})">Edit</button><button class="btn danger sm" onclick="delBarang(${x.i})">Hapus</button></div></td></tr>`).join('');
+}
+function openBarang(i){if(!canFinEdit())return;
+  const isNew=(i===undefined||i===null||i<0);
+  const b=isNew?{kode:'14.01.',nama:'',harga:0}:db.barang[i];
+  modal.innerHTML=`<h2>${isNew?'Tambah':'Edit'} Barang</h2>
+    <div class="field"><label>Kode Barang</label><input id="b_kode" value="${b.kode||''}" placeholder="14.01.xxx"></div>
+    <div class="field"><label>Nama Material</label><input id="b_nama" value="${b.nama||''}"></div>
+    <div class="field"><label>Harga (Rp)</label><input type="number" id="b_harga" value="${b.harga||0}"></div>
+    <div class="actions"><button class="btn ghost" onclick="closeModal()">Batal</button><button class="btn" onclick="saveBarang(${isNew?-1:i})">Simpan</button></div>`;
+  overlay.classList.add('show');
+}
+function saveBarang(i){if(!canFinEdit())return;const kode=document.getElementById('b_kode').value.trim(),nama=document.getElementById('b_nama').value.trim();
+  if(!kode||!nama)return alert('Kode & nama wajib diisi');
+  const d={kode,nama,harga:+document.getElementById('b_harga').value||0};
+  if(i>=0)Object.assign(db.barang[i],d);else db.barang.push(d);
+  save();closeModal();renderBarang();}
+function delBarang(i){if(!canFinEdit())return;if(!confirm('Hapus barang ini?'))return;db.barang.splice(i,1);save();renderBarang();}
+
+function renderAll(){fillPicSelects();renderDash();renderKar();renderPel();renderPes();renderLeads();renderKanban();renderKeu();renderBarang();}
+fillMonthInputs();
+document.getElementById('dashMonth').onchange=renderDash;
+renderAll();
+initStorage();
+</script>
+</body>
+</html>
