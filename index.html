@@ -137,7 +137,7 @@ body.finedit #page-barang .row-actions{display:flex!important}
     <div class="head"><div><h1>Pelanggan</h1><div class="sub">Pelanggan yang sudah pernah beli</div></div>
       <button class="btn" onclick="openPel()">+ Tambah Pelanggan</button></div>
     <div class="toolbar"><label class="tag">Cari:</label><input id="pelSearch" placeholder="nama / kontak" oninput="renderPel()"></div>
-    <div class="card"><table><thead><tr><th>Nama</th><th>Kontak</th><th>Alamat</th><th>Total Belanja</th><th>Catatan</th><th></th></tr></thead>
+    <div class="card"><table><thead><tr><th>Nama</th><th>Kontak</th><th>Alamat</th><th>Total Belanja</th><th>Thn Terakhir</th><th>Catatan</th><th></th></tr></thead>
       <tbody id="pelRows"></tbody></table>
       <div class="empty" id="pelEmpty">Belum ada pelanggan.</div></div>
   </section>
@@ -185,7 +185,7 @@ body.finedit #page-barang .row-actions{display:flex!important}
     <div class="toolbar">
       <label class="tag">Periode:</label><input type="month" id="keuMonth" onchange="renderKeu()">
       <label class="tag">Jenis:</label><select id="keuJenisF" onchange="renderKeu()"><option value="">Semua</option><option value="masuk">Masuk</option><option value="keluar">Keluar</option></select>
-      <label class="tag">Kategori:</label><select id="keuKatF" onchange="renderKeu()"><option value="">Semua</option><option>Belanja Bahan</option><option>Upah</option><option>Operasional</option><option>Marketing</option><option>DP Pesanan</option><option>Pelunasan</option><option>Lainnya</option></select>
+      <label class="tag">Kategori:</label><select id="keuKatF" onchange="renderKeu()"><option value="">Semua</option><option>Belanja Bahan</option><option>Upah</option><option>Operasional (BOP)</option><option>Marketing</option><option>DP Pesanan</option><option>Pelunasan</option><option>Lainnya</option></select>
     </div>
     <div class="grid stats" id="keuStats" style="margin-bottom:15px"></div>
     <div class="grid" style="grid-template-columns:1.2fr 1fr;align-items:start">
@@ -218,6 +218,7 @@ body.finedit #page-barang .row-actions{display:flex!important}
 const SUPABASE_URL='https://mifdxxqiajdchfggbyjn.supabase.co';
 const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1pZmR4eHFpYWpkY2hmZ2dieWpuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE5Njg3NDIsImV4cCI6MjA5NzU0NDc0Mn0.XaggjESIGM0rUDZ70YS2Jr2f8mltI1gk8fZyu9nPg-k';
 const ROW_ID=2; // baris data khusus aplikasi mebel
+const OCR_URL='https://mmb-ocr.mebelsunsun.workers.dev'; // Worker OCR (Cloudflare Workers AI)
 /* ================================================= */
 const KEY='mmbtim_v1';
 const ELITE_IDS=[1,2,3]; // Distribusi tugas: Sunsun, Syamil, Faikar
@@ -380,7 +381,7 @@ function renderPel(){
   if(q)rows=rows.filter(p=>(p.name+' '+(p.contact||'')).toLowerCase().includes(q));
   document.getElementById('pelEmpty').style.display=rows.length?'none':'block';
   document.getElementById('pelRows').innerHTML=rows.map(p=>
-    `<tr><td><b>${p.name}</b></td><td>${p.contact||'-'}</td><td>${p.address||'-'}</td><td>${rp(p.total||0)}</td><td class="tag">${p.note||'-'}</td>
+    `<tr><td><b>${p.name}</b></td><td>${p.contact||'-'}</td><td>${p.address||'-'}</td><td>${rp(p.total||0)}</td><td>${p.tahun||'-'}</td><td class="tag">${p.note||'-'}</td>
     <td><div class="row-actions"><button class="btn ghost sm" onclick="openPel(${p.id})">Edit</button><button class="btn danger sm" onclick="delPel(${p.id})">Hapus</button></div></td></tr>`).join('');
 }
 
@@ -482,26 +483,39 @@ function saveKar(id){const name=k_name.value.trim();if(!name)return alert('Nama 
 function delKar(id){if(ELITE_IDS.includes(id))return alert('Karyawan elite tidak bisa dihapus.');if(!confirm('Hapus karyawan ini?'))return;db.karyawan=db.karyawan.filter(m=>m.id!==id);save();renderAll();}
 
 function openPel(id){
-  const p=id?db.pelanggan.find(x=>x.id===id):{name:'',contact:'',address:'',total:0,note:''};
+  const p=id?db.pelanggan.find(x=>x.id===id):{name:'',contact:'',address:'',total:0,tahun:'',note:''};
   modal.innerHTML=`<h2>${id?'Edit':'Tambah'} Pelanggan</h2>
     <div class="field"><label>Nama</label><input id="pl_name" value="${p.name}"></div>
     <div class="two"><div class="field"><label>Kontak</label><input id="pl_contact" value="${p.contact||''}"></div>
     <div class="field"><label>Total Belanja (Rp)</label><input type="number" id="pl_total" value="${p.total||0}"></div></div>
-    <div class="field"><label>Alamat</label><input id="pl_addr" value="${p.address||''}"></div>
+    <div class="two"><div class="field"><label>Alamat</label><input id="pl_addr" value="${p.address||''}"></div>
+    <div class="field"><label>Tahun Terakhir Beli</label><input type="number" id="pl_tahun" value="${p.tahun||''}" placeholder="mis. 2026"></div></div>
     <div class="field"><label>Catatan</label><textarea id="pl_note" rows="2">${p.note||''}</textarea></div>
     <div class="actions"><button class="btn ghost" onclick="closeModal()">Batal</button><button class="btn" onclick="savePel(${id||0})">Simpan</button></div>`;
   overlay.classList.add('show');
 }
 function savePel(id){const name=pl_name.value.trim();if(!name)return alert('Nama wajib diisi');
-  const d={name,contact:pl_contact.value.trim(),address:pl_addr.value.trim(),total:+pl_total.value||0,note:pl_note.value.trim()};
+  const d={name,contact:pl_contact.value.trim(),address:pl_addr.value.trim(),total:+pl_total.value||0,tahun:+pl_tahun.value||'',note:pl_note.value.trim()};
   if(id)Object.assign(db.pelanggan.find(x=>x.id===id),d);else db.pelanggan.push({id:nid(),...d});save();closeModal();renderPel();renderDash();}
 function delPel(id){if(!confirm('Hapus pelanggan ini?'))return;db.pelanggan=db.pelanggan.filter(p=>p.id!==id);save();renderPel();}
+/* Pesanan tahap "Selesai" otomatis jadi data pelanggan (total & tahun dihitung dari pesanan selesai milik owner tsb) */
+function syncPelanggan(owner){
+  if(!owner)return;const key=owner.trim().toLowerCase();
+  const done=db.pesanan.filter(p=>p.stage==='Selesai'&&(p.owner||'').trim().toLowerCase()===key);
+  let pel=db.pelanggan.find(x=>(x.name||'').trim().toLowerCase()===key);
+  if(!pel&&!done.length)return;
+  const total=done.reduce((s,p)=>s+(+p.value||0),0);
+  const tahun=done.length?Math.max(...done.map(p=>+((p.date||'').slice(0,4))||0)):0;
+  if(pel){pel.total=total;if(tahun)pel.tahun=tahun;}
+  else{db.pelanggan.push({id:nid(),name:owner.trim(),contact:'',address:'',total,tahun:tahun||'',note:'Otomatis dari pesanan selesai'});}
+}
 
 function openPes(id){
   const mo=thisMonth();
   const p=id?db.pesanan.find(x=>x.id===id):{owner:'',item:'',value:0,pay:'30-40-30',pic:elites()[0]?.id,stage:'Survei',date:mo+'-'+String(new Date().getDate()).padStart(2,'0')};
   const popts=db.karyawan.map(m=>`<option value="${m.id}" ${p.pic===m.id?'selected':''}>${m.name}</option>`).join('');
   const sopts=['Survei','Desain','Produksi','Instalasi','Selesai','Batal'].map(s=>`<option ${p.stage===s?'selected':''}>${s}</option>`).join('');
+  const plopts='<option value="">— ketik manual —</option>'+db.pelanggan.map(x=>`<option ${p.owner===x.name?'selected':''}>${x.name}</option>`).join('');
   modal.innerHTML=`<h2>${id?'Edit':'Tambah'} Pesanan</h2>
     <div class="field"><label>Owner / Pemilik</label><input id="ps_owner" value="${p.owner}" placeholder="nama pelanggan"></div>
     <div class="field"><label>Item / Jenis Furniture</label><input id="ps_item" value="${p.item||''}" placeholder="mis. kitchen set, lemari pakaian"></div>
@@ -516,8 +530,8 @@ function openPes(id){
 }
 function savePes(id){const owner=ps_owner.value.trim();if(!owner)return alert('Owner wajib diisi');
   const d={owner,item:ps_item.value.trim(),value:+ps_value.value||0,pay:ps_pay.value.trim(),pic:+ps_pic.value,stage:ps_stage.value,date:ps_date.value};
-  if(id)Object.assign(db.pesanan.find(x=>x.id===id),d);else db.pesanan.push({id:nid(),...d});save();closeModal();renderPes();renderDash();}
-function delPes(id){if(!confirm('Hapus pesanan ini?'))return;db.pesanan=db.pesanan.filter(p=>p.id!==id);save();renderPes();renderDash();}
+  if(id)Object.assign(db.pesanan.find(x=>x.id===id),d);else db.pesanan.push({id:nid(),...d});syncPelanggan(d.owner);save();closeModal();renderPes();renderDash();renderPel();}
+function delPes(id){if(!confirm('Hapus pesanan ini?'))return;const o=(db.pesanan.find(p=>p.id===id)||{}).owner;db.pesanan=db.pesanan.filter(p=>p.id!==id);syncPelanggan(o);save();renderPes();renderDash();renderPel();}
 
 function openLead(id){
   const mo=document.getElementById('leadMonth').value||thisMonth();
@@ -575,7 +589,7 @@ function renderKeu(){
     {label:'Arus Kas Bersih (bln)',num:rp(inB-outB),c:(inB-outB)>=0?'green':'red'}
   ];
   document.getElementById('keuStats').innerHTML=cards.map(c=>`<div class="card stat"><div class="label">${c.label}</div><div class="num" style="color:var(--${c.c})">${c.num}</div></div>`).join('');
-  const kk=['Belanja Bahan','Upah','Operasional','Marketing','Lainnya'];
+  const kk=['Belanja Bahan','Upah','Operasional (BOP)','Marketing','Lainnya'];
   const kv=k=>sum(all.filter(t=>t.jenis==='keluar'&&t.kategori===k&&(t.tanggal||'').slice(0,7)===mo));
   const maxK=Math.max(1,...kk.map(kv));
   document.getElementById('keuKat').innerHTML=kk.map(k=>{const v=kv(k);return `<div style="margin-bottom:11px"><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:3px"><span>${k}</span><b>${rp(v)}</b></div><div class="bar"><span style="width:${v/maxK*100}%;background:var(--amber)"></span></div></div>`;}).join('');
@@ -601,6 +615,9 @@ function openTrx(id){if(!canFinEdit())return;
   window._trx=t;
   const popts='<option value="0">— tidak terkait —</option>'+db.pesanan.map(p=>`<option value="${p.id}" ${t.pesanan===p.id?'selected':''}>${p.owner}${p.item?' — '+p.item:''}</option>`).join('');
   modal.innerHTML=`<h2>${id?'Edit':'Tambah'} Transaksi</h2>
+    <div class="field"><button class="btn ghost" style="width:100%" onclick="document.getElementById('x_foto').click()">📷 Foto bon / kwitansi / catatan (auto-isi)</button>
+    <input type="file" id="x_foto" accept="image/*" capture="environment" style="display:none" onchange="trxFoto(event)">
+    <div id="x_ocr" class="tag" style="margin-top:6px"></div></div>
     <div class="two"><div class="field"><label>Tanggal</label><input type="date" id="x_tgl" value="${t.tanggal}"></div>
     <div class="field"><label>Jenis</label><select id="x_jenis" onchange="trxJenis()"><option value="keluar" ${t.jenis==='keluar'?'selected':''}>Keluar</option><option value="masuk" ${t.jenis==='masuk'?'selected':''}>Masuk</option></select></div></div>
     <div class="field"><label>Kategori</label><select id="x_kat" onchange="trxKat()"></select></div>
@@ -609,13 +626,14 @@ function openTrx(id){if(!canFinEdit())return;
     <div class="field"><label>Metode</label><select id="x_met"><option ${t.metode==='Cash'?'selected':''}>Cash</option><option ${t.metode==='Transfer'?'selected':''}>Transfer</option></select></div></div>
     <div class="field"><label>Kaitkan Pesanan (opsional)</label><select id="x_pes">${popts}</select></div>
     <div class="field"><label>Catatan</label><input id="x_cat" value="${t.catatan||''}"></div>
+    <div class="tag" style="margin-bottom:6px">💡 Biaya sebelum deal/produksi (survei, bensin ukur, ongkos, upah survei) → pilih kategori "Operasional (BOP)" & jangan kaitkan ke pesanan. Belanja bahan/upah dikaitkan ke pesanan hanya setelah masuk produksi.</div>
     <div class="actions" style="margin-top:14px"><button class="btn ghost" onclick="closeModal()">Batal</button><button class="btn" onclick="saveTrx(${id||0})">Simpan</button></div>`;
   overlay.classList.add('show');
   trxJenis(true);
 }
 function trxJenis(init){
   const j=document.getElementById('x_jenis').value;
-  const list=j==='masuk'?['DP Pesanan','Pelunasan','Lainnya']:['Belanja Bahan','Upah','Operasional','Marketing','Lainnya'];
+  const list=j==='masuk'?['DP Pesanan','Pelunasan','Lainnya']:['Belanja Bahan','Upah','Operasional (BOP)','Marketing','Lainnya'];
   const cur=init?window._trx.kategori:list[0];
   document.getElementById('x_kat').innerHTML=list.map(k=>`<option ${k===cur?'selected':''}>${k}</option>`).join('');
   trxKat();
@@ -634,6 +652,30 @@ function trxKat(){
   } else { box.innerHTML=''; }
 }
 function trxBarang(){const i=document.getElementById('x_barang').value;if(i==='')return;const b=(db.barang||[])[+i];if(!b)return;document.getElementById('x_jml').value=b.harga;const c=document.getElementById('x_cat');if(c&&!c.value)c.value=b.kode+' '+b.nama;}
+async function ocrCloud(b64){
+  const res=await fetch(OCR_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image:b64})});
+  if(!res.ok)throw new Error('http '+res.status);
+  const j=await res.json();if(j.error)throw new Error(j.error);
+  j.engine=j.engine||'AI Cloudflare';return j;
+}
+async function ocrBrowser(file,o){
+  if(o)o.textContent='⏳ OCR di browser (Tesseract)… mungkin agak lama';
+  if(!window.Tesseract){await new Promise((res,rej)=>{const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';s.onload=res;s.onerror=()=>rej(new Error('gagal memuat Tesseract'));document.head.appendChild(s);});}
+  const{data}=await window.Tesseract.recognize(file,'ind+eng');
+  const raw=data.text||'';
+  let total=0;(raw.match(/[\d.,]{4,}/g)||[]).forEach(s=>{const n=+s.replace(/[^\d]/g,'');if(n>total)total=n;});
+  const item=(raw.split('\n').map(s=>s.trim()).filter(Boolean)[0]||'');
+  return {item,total,harga_satuan:0,raw,engine:'Tesseract (browser)'};
+}
+function trxFoto(ev){const f=ev.target.files[0];if(!f)return;const o=document.getElementById('x_ocr');if(o)o.textContent='⏳ Membaca foto…';
+  const rd=new FileReader();rd.onload=async()=>{
+    const b64=String(rd.result).split(',')[1];let j=null;
+    try{ if(OCR_URL){j=await ocrCloud(b64);} else {j=await ocrBrowser(f,o);} }
+    catch(e){ try{ if(OCR_URL&&o)o.textContent='Kuota AI habis/gagal — beralih ke OCR browser…'; j=await ocrBrowser(f,o); }catch(e2){ if(o)o.textContent='Gagal baca foto: '+e2.message; return; } }
+    if(j.item){const c=document.getElementById('x_cat');if(c)c.value=j.item;}
+    if(j.total){document.getElementById('x_jml').value=j.total;}
+    if(o)o.innerHTML=`✅ Terbaca via ${j.engine} — PERIKSA & KOREKSI field di bawah sebelum Simpan:<br><span style="color:var(--muted)">${String(j.raw||'').replace(/[<>]/g,'').slice(0,400)}</span>`;
+  };rd.readAsDataURL(f);ev.target.value='';}
 function trxModel(){const harian=document.getElementById('x_model').value==='Harian';const h=document.getElementById('x_harian');if(h)h.style.display=harian?'':'none';if(harian)trxHitung();}
 function trxHitung(){const h=+document.getElementById('x_hari').value||0, tr=+document.getElementById('x_tarif').value||0;document.getElementById('x_jml').value=h*tr;}
 function saveTrx(id){if(!canFinEdit())return;
